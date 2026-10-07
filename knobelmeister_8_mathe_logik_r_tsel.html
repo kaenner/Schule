@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnobelMeister 8 – Logik & Mathe</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti für Feier-Effekte -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .card-flip {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-flip.flipped {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-amber-200">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 bg-gradient-to-tr from-amber-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-md shadow-indigo-100 font-black">
+                    🧩
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold bg-gradient-to-r from-indigo-700 via-purple-700 to-amber-600 bg-clip-text text-transparent leading-tight">
+                        KnobelMeister 8
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">Klasse 8: Mathe- & Logik-Campus</p>
+                </div>
+            </div>
+
+            <!-- Stats & Action Buttons -->
+            <div class="flex items-center space-x-3">
+                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm transition font-medium flex items-center gap-1.5" title="Ton an/aus">
+                    <span id="soundIcon">🔊</span>
+                </button>
+                <button onclick="toggleScratchpad()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold flex items-center gap-1.5 transition">
+                    <span>📝</span>
+                    <span class="hidden sm:inline">Schmierzettel</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- Level Indicator & Progress Section -->
+        <section class="bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-200/80 transition-all">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div id="levelBadgeIcon" class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold shadow-inner">
+                        🌱
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400" id="levelIndexText">Level 1 von 4</span>
+                            <span id="levelDifficultyTag" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                Leicht
+                            </span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                                <span>🎲</span> <span id="poolBadge">20 Aufgaben im Pool</span>
+                            </span>
+                        </div>
+                        <h2 id="levelName" class="text-lg md:text-xl font-bold text-slate-800 mt-0.5">Einstieg & Schnelles Denken</h2>
+                    </div>
+                </div>
+
+                <!-- Level Tabs -->
+                <div class="flex items-center bg-slate-100 p-1 rounded-2xl gap-1 text-xs font-bold overflow-x-auto" id="levelTabsContainer">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Streak for Promotion -->
+            <div class="mt-4 pt-1">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm font-semibold mb-2">
+                    <div class="flex items-center gap-2 text-slate-700">
+                        <span class="text-amber-500 text-base">⚡</span>
+                        <span>Level-Up Bedingung:</span>
+                        <span class="text-indigo-600 font-bold">5 Aufgaben in Folge OHNE Hilfekarte lösen</span>
+                    </div>
+                    <div class="text-slate-500 font-bold" id="streakCounterText">
+                        0 / 5 gemeistert
+                    </div>
+                </div>
+
+                <!-- Step Track with 5 Steps -->
+                <div class="grid grid-cols-5 gap-2 sm:gap-3" id="streakTrack">
+                    <!-- 5 Steps populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left: Riddle Card -->
+            <div class="lg:col-span-8 space-y-5">
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/80 relative overflow-hidden">
+                    
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <span id="taskCategory" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            🔢 Zahlenrätsel
+                        </span>
+                        <span id="hintUsedStatusBadge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                            ⚠️ Hilfekarte aktiv (zählt nicht für Level-Up)
+                        </span>
+                    </div>
+
+                    <h3 id="taskTitle" class="text-xl md:text-2xl font-extrabold text-slate-900 mb-3 leading-snug">
+                        Lade Aufgabe...
+                    </h3>
+                    
+                    <div id="taskStory" class="text-slate-700 text-base md:text-lg leading-relaxed mb-6 font-normal">
+                        <!-- Riddle question content -->
+                    </div>
+
+                    <!-- Interactive Inputs -->
+                    <div id="interactionContainer" class="space-y-4 pt-2">
+                        <!-- Injected via JavaScript -->
+                    </div>
+
+                    <!-- Bottom Controls -->
+                    <div class="mt-8 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <button id="hintBtn" onclick="toggleHint()" class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-sm border border-amber-200 transition active:scale-95">
+                            <span class="text-lg">💡</span>
+                            <span id="hintBtnText">Hilfekarte aufdecken</span>
+                        </button>
+
+                        <div class="flex items-center gap-2">
+                            <button id="randomPickBtn" onclick="pickRandomTask()" class="px-3.5 py-3 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-sm border border-purple-200 transition active:scale-95 flex items-center gap-1.5" title="Eine zufällige neue Aufgabe aus dem 20er-Pool ziehen">
+                                <span>🎲</span>
+                                <span class="hidden sm:inline">Zufall</span>
+                            </button>
+                            <button id="skipTaskBtn" onclick="loadNextTask(false)" class="px-3.5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
+                                Andere ↷
+                            </button>
+                            <button id="checkAnswerBtn" onclick="checkAnswer()" class="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold text-sm shadow-md shadow-indigo-200 transition">
+                                Antwort prüfen ✓
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation Result Card -->
+                <div id="explanationBox" class="hidden rounded-3xl p-6 border transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <div id="explanationIcon" class="text-3xl">🎉</div>
+                        <div class="flex-1">
+                            <h4 id="explanationTitle" class="text-lg font-bold mb-1">Richtig gelöst!</h4>
+                            <p id="explanationText" class="text-slate-700 text-sm md:text-base leading-relaxed mb-4"></p>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button onclick="loadNextTask(true)" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition">
+                                    Nächste Aufgabe »
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-4 space-y-4">
+                
+                <!-- 3D Flip Card -->
+                <div class="perspective-1000 w-full min-h-[300px]">
+                    <div id="hintCardFlipper" class="card-flip relative w-full h-full min-h-[300px]">
+                        
+                        <!-- Front Face -->
+                        <div class="backface-hidden absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-500 rounded-3xl p-6 text-white shadow-md flex flex-col justify-between border-2 border-amber-300">
+                            <div>
+                                <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">
+                                    💡
+                                </div>
+                                <h4 class="text-xl font-black mb-1">Hilfekarte</h4>
+                                <p class="text-amber-100 text-sm">
+                                    Brauchst du einen Denkanstoß? Drehe diese Karte um, wenn du festhängst!
+                                </p>
+                            </div>
+
+                            <div class="bg-black/15 backdrop-blur-sm rounded-2xl p-3 text-xs text-amber-50">
+                                <strong>Hinweis zur Regel:</strong><br>
+                                Das Aufdecken hilft beim Verstehen, aber diese Aufgabe zählt nicht zum 5er-Level-Up-Streak.
+                            </div>
+
+                            <button onclick="toggleHint()" class="w-full py-3 bg-white text-amber-900 font-extrabold text-sm rounded-2xl shadow hover:bg-amber-50 transition active:scale-95 text-center">
+                                Karte aufdecken ↷
+                            </button>
+                        </div>
+
+                        <!-- Back Face (Revealed Hint) -->
+                        <div class="backface-hidden rotate-y-180 absolute inset-0 bg-white rounded-3xl p-6 shadow-md border-2 border-amber-400 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3 pb-2 border-b border-amber-100">
+                                    <span class="text-xs font-black uppercase text-amber-600 tracking-wider flex items-center gap-1">
+                                        <span>🔍</span> Aufgedeckter Tipp
+                                    </span>
+                                    <button onclick="toggleHint()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">
+                                        Schließen ✕
+                                    </button>
+                                </div>
+
+                                <h5 class="font-bold text-slate-800 text-sm mb-2">Tipp für diese Aufgabe:</h5>
+                                <div id="hintContent" class="text-slate-600 text-sm leading-relaxed space-y-2">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+                                <span class="text-base">🧠</span>
+                                <span>Nutze den Tipp, um die Lösung eigenständig zu finden!</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Learning Coach Box -->
+                <div class="bg-indigo-50/70 border border-indigo-100 rounded-3xl p-5 text-indigo-900">
+                    <div class="flex items-center gap-2 font-extrabold text-sm mb-1.5 text-indigo-950">
+                        <span>🎯</span> Strategie für Jahrgang 8
+                    </div>
+                    <p class="text-xs leading-relaxed text-indigo-800" id="didacticTip">
+                        Lies die Aufgabe zweimal durch. Notiere dir gegebene Zahlen und gesuchte Größen auf dem Schmierzettel.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Digital Scratchpad Modal -->
+    <div id="scratchpadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 md:p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📝</span>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-base">Digitaler Schmierzettel</h3>
+                        <p class="text-xs text-slate-500">Skizziere oder rechne deine Zwischenschritte aus</p>
+                    </div>
+                </div>
+                <button onclick="toggleScratchpad()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">
+                    ✕
+                </button>
+            </div>
+
+            <div class="my-3 flex items-center justify-between gap-2">
+                <div class="flex gap-1.5">
+                    <button id="canvasModeDraw" onclick="setScratchMode('draw')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Zeichnen</button>
+                    <button id="canvasModeText" onclick="setScratchMode('text')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">Text & Notiz</button>
+                </div>
+                <button onclick="clearScratchpad()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100">
+                    Löschen 🗑️
+                </button>
+            </div>
+
+            <div id="scratchpadCanvasContainer" class="flex-1 w-full border border-slate-200 rounded-2xl bg-amber-50/30 overflow-hidden relative min-h-[300px]">
+                <canvas id="scratchCanvas" class="w-full h-full block cursor-crosshair touch-none"></canvas>
+            </div>
+
+            <textarea id="scratchTextarea" placeholder="Schreibe hier deine Rechnungen auf... (z. B. x + 5 = 12)" class="hidden flex-1 w-full border border-slate-200 rounded-2xl p-4 font-mono text-sm resize-none focus:outline-none focus:border-indigo-500 min-h-[300px]"></textarea>
+
+            <div class="pt-4 flex justify-end">
+                <button onclick="toggleScratchpad()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-sm">
+                    Schließen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level-Up Modal -->
+    <div id="levelUpModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl text-center transform scale-95 transition-all">
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-lg shadow-amber-200 mb-4 animate-bounce">
+                🏆
+            </div>
+            <span class="text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Level-Aufstieg!</span>
+            <h3 id="levelUpTitle" class="text-2xl font-black text-slate-900 mt-2">Herzlichen Glückwunsch!</h3>
+            <p id="levelUpDesc" class="text-slate-600 text-sm mt-2 leading-relaxed">
+                Du hast 5 Aufgaben in Folge ohne Hilfekarte gemeistert! Du steigst jetzt auf in das nächste Niveau.
+            </p>
+
+            <div class="my-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-around">
+                <div>
+                    <div class="text-xs text-slate-400 font-bold">Vorher</div>
+                    <div id="levelUpOld" class="font-bold text-slate-700 text-sm">Leicht</div>
+                </div>
+                <div class="text-indigo-600 text-xl font-bold">➔</div>
+                <div>
+                    <div class="text-xs text-indigo-500 font-bold">Neues Niveau</div>
+                    <div id="levelUpNew" class="font-black text-indigo-600 text-base">Mittel</div>
+                </div>
+            </div>
+
+            <button onclick="confirmLevelUp()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-extrabold rounded-2xl shadow-lg shadow-indigo-200 text-sm transition active:scale-95">
+                Weiter zu den neuen Aufgaben 🚀
+            </button>
+        </div>
+    </div>
+
+<script>
+const LEVELS = [
+    {
+        id: 0,
+        key: 'leicht',
+        name: 'Leicht',
+        badge: '🟢',
+        title: 'Einstieg & Schnelles Denken',
+        color: 'emerald',
+        description: 'Einfache Muster, alltägliche Logik und kleine Zahlen zum Aufwärmen.',
+        tip: 'Tipp: Lies die Frage ganz in Ruhe. Die Lösung lässt sich oft direkt im Kopf finden!',
+        tasks: [
+            {
+                id: 'l1',
+                category: '🔢 Zahlenreihe',
+                title: 'Die gerade Kette',
+                story: 'Schau dir diese einfache Zahlenreihe an: <strong>2, 4, 6, 8, 10, ...</strong><br>Welche Zahl kommt als Nächstes?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: '',
+                placeholder: 'z. B. 12',
+                hint: 'In jedem Schritt werden genau 2 dazugezählt (+2). Was ist 10 + 2?',
+                explanation: 'Es handelt sich um die geraden Zahlen (+2). 10 + 2 = 12.'
+            },
+            {
+                id: 'l2',
+                category: '⏱️ Zeit-Logik',
+                title: 'Die brennenden Kerzen',
+                story: 'Eine Kerze brennt in genau 2 Stunden vollständig ab. Du zündest 3 gleiche Kerzen gleichzeitig an. Nach wie vielen Stunden sind alle Kerzen abgebrannt?',
+                type: 'choice',
+                options: ['2 Stunden', '4 Stunden', '6 Stunden', '8 Stunden'],
+                correctAnswer: '2 Stunden',
+                hint: 'Die Kerzen brennen gleichzeitig und nicht nacheinander!',
+                explanation: 'Weil alle 3 Kerzen zur selben Zeit angezündet werden, sind alle nach genau 2 Stunden heruntergebrannt.'
+            },
+            {
+                id: 'l3',
+                category: '🍎 Einkauf & Alltag',
+                title: 'Äpfel im Korb',
+                story: 'In einer Schale liegen 8 Äpfel. Du nimmst 3 Äpfel heraus. Wie viele Äpfel hast du jetzt?',
+                type: 'number',
+                correctAnswer: 3,
+                unit: 'Äpfel',
+                placeholder: 'Anzahl',
+                hint: 'Lies genau: Die Frage ist nicht, wie viele in der Schale bleiben, sondern wie viele DU in der Hand hast!',
+                explanation: 'Du hast 3 Äpfel herausgenommen, also hast du genau 3 Äpfel.'
+            },
+            {
+                id: 'l4',
+                category: '🔢 Verdoppeln',
+                title: 'Das Taschengeld',
+                story: 'Anna hat 7 Euro gespart. Ihr Opa verdoppelt ihr Erspartes zum Geburtstag. Wie viel Geld hat Anna jetzt insgesamt?',
+                type: 'choice',
+                options: ['12 €', '14 €', '16 €', '21 €'],
+                correctAnswer: '14 €',
+                hint: 'Verdoppeln bedeutet: Mal 2 rechnen (7 · 2).',
+                explanation: '7 € verdoppelt ergibt 7 · 2 = 14 €.'
+            },
+            {
+                id: 'l5',
+                category: '🐾 Tier-Logik',
+                title: 'Katzenpfoten im Zimmer',
+                story: 'Im Wohnzimmer schlafen 3 gesunde Katzen. Wie viele Pfoten haben diese 3 Katzen zusammen?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Pfoten',
+                placeholder: 'Pfoten',
+                hint: 'Eine Katze hat 4 Pfoten. Rechne 3 mal 4.',
+                explanation: '3 Katzen mit je 4 Pfoten = 3 · 4 = 12 Pfoten.'
+            },
+            {
+                id: 'l6',
+                category: '🍕 Teilen & Hälften',
+                title: 'Schokolade teilen',
+                story: 'Eine Tafel Schokolade hat 24 Stücke. Ben isst genau die Hälfte der Tafel auf. Wie viele Stücke Schokolade sind noch übrig?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Stücke',
+                placeholder: 'Stücke',
+                hint: 'Die Hälfte bedeutet: Geteilt durch 2 (24 ÷ 2).',
+                explanation: '24 ÷ 2 = 12 Stücke verbleiben.'
+            },
+            {
+                id: 'l7',
+                category: '🚌 Busfahrt',
+                title: 'Fahrgäste an der Haltestelle',
+                story: 'In einem Linienbus sitzen 15 Personen. An der Haltestelle steigen 4 Personen aus und 6 neue Personen ein. Wie viele Personen sind jetzt im Bus?',
+                type: 'number',
+                correctAnswer: 17,
+                unit: 'Personen',
+                placeholder: 'Anzahl Personen',
+                hint: 'Rechne Schritt für Schritt: 15 minus 4, danach plus 6.',
+                explanation: '15 - 4 = 11 Personen. 11 + 6 = 17 Personen.'
+            },
+            {
+                id: 'l8',
+                category: '📅 Kalender-Logik',
+                title: 'Der Blick in den Kalender',
+                story: 'Heute ist Dienstag. Welcher Wochentag ist in genau 3 Tagen?',
+                type: 'choice',
+                options: ['Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
+                correctAnswer: 'Freitag',
+                hint: 'Zähle ab Dienstag 3 Tage weiter: Mittwoch (1), Donnerstag (2), ...',
+                explanation: 'Dienstag + 1 = Mittwoch, + 2 = Donnerstag, + 3 = Freitag.'
+            },
+            {
+                id: 'l9',
+                category: '🧤 Kleidung & Paare',
+                title: 'Handschuhe im Schrank',
+                story: 'Im Kleiderschrank liegen 6 Paar Winterhandschuhe. Wie viele einzelne Handschuhe sind das insgesamt?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Handschuhe',
+                placeholder: 'Einzelne Handschuhe',
+                hint: 'Ein Paar besteht aus 2 Handschuhen. Rechne 6 · 2.',
+                explanation: '6 Paare · 2 = 12 einzelne Handschuhe.'
+            },
+            {
+                id: 'l10',
+                category: '🪙 Kleingeld',
+                title: 'Münzen zählen',
+                story: 'In deiner Hosentasche findest du genau vier 50-Cent-Münzen. Wie viel Euro hast du damit zusammen?',
+                type: 'choice',
+                options: ['1,50 €', '2,00 €', '2,50 €', '3,00 €'],
+                correctAnswer: '2,00 €',
+                hint: 'Zwei 50-Cent-Münzen ergeben 1 Euro. Wie viel ergeben vier Münzen?',
+                explanation: '4 · 50 Cent = 200 Cent = 2,00 €.'
+            },
+            {
+                id: 'l11',
+                category: '🎲 Würfel-Logik',
+                title: 'Die geheime Unterseite',
+                story: 'Bei einem normalen Spielwürfel ergeben die gegenüberliegenden Seiten zusammen immer 7. Du wirfst eine 2. Welche Zahl liegt unten auf dem Tisch?',
+                type: 'number',
+                correctAnswer: 5,
+                unit: '',
+                placeholder: 'Zahl',
+                hint: 'Obere Zahl + untere Zahl = 7. Was ist 7 minus 2?',
+                explanation: 'Gegenüberliegende Seiten ergeben 7: 7 - 2 = 5.'
+            },
+            {
+                id: 'l12',
+                category: '🐌 Tier-Tempo',
+                title: 'Die Schnecke am Gartenzaun',
+                story: 'Eine Gartenschnecke kriecht in einer Minute genau 10 cm weit. Wie viele Zentimeter schafft sie in 5 Minuten bei gleichem Tempo?',
+                type: 'number',
+                correctAnswer: 50,
+                unit: 'cm',
+                placeholder: 'cm',
+                hint: 'Multipliziere die Strecke pro Minute (10 cm) mit 5.',
+                explanation: '10 cm · 5 = 50 cm.'
+            },
+            {
+                id: 'l13',
+                category: '🚲 Fahrradständer',
+                title: 'Räder auf dem Schulhof',
+                story: 'Im Fahrradständer vor der Schule stehen 7 normale Fahrräder. Wie viele Räder haben diese Fahrräder zusammen?',
+                type: 'number',
+                correctAnswer: 14,
+                unit: 'Räder',
+                placeholder: 'Anzahl Räder',
+                hint: 'Ein normales Fahrrad hat 2 Räder. Rechne 7 · 2.',
+                explanation: '7 Fahrräder mit je 2 Rädern = 7 · 2 = 14 Räder.'
+            },
+            {
+                id: 'l14',
+                category: '🥚 Backstube',
+                title: 'Der Eierkarton',
+                story: 'In einer Packung sind 10 Eier. Mama nimmt 4 Eier für Waffeln und Papa kocht 2 Eier zum Frühstück. Wie viele Eier sind noch im Karton?',
+                type: 'number',
+                correctAnswer: 4,
+                unit: 'Eier',
+                placeholder: 'Eier',
+                hint: 'Zusammen wurden 4 + 2 = 6 Eier entnommen. Wie viele bleiben von 10 übrig?',
+                explanation: '10 - 4 - 2 = 4 verbleibende Eier.'
+            },
+            {
+                id: 'l15',
+                category: '⚽ Sport & Zahlen',
+                title: 'Das Fußball-Trikot',
+                story: 'Lukas trägt das Trikot mit der Nummer 9. Er tauscht mit einem Mitspieler, der genau die doppelte Trikotnummer trägt. Welche Nummer ist das?',
+                type: 'number',
+                correctAnswer: 18,
+                unit: '',
+                placeholder: 'Trikotnummer',
+                hint: 'Das Doppelte von 9 berechnet man mit 9 · 2.',
+                explanation: 'Das Doppelte von 9 ist 9 · 2 = 18.'
+            },
+            {
+                id: 'l16',
+                category: '📐 Formen',
+                title: 'Ecken zählen',
+                story: 'Ein Dreieck hat 3 Ecken. Wie viele Ecken haben 4 einzelne Dreiecke zusammen?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Ecken',
+                placeholder: 'Ecken',
+                hint: 'Multipliziere 4 Dreiecke mit je 3 Ecken (4 · 3).',
+                explanation: '4 · 3 = 12 Ecken.'
+            },
+            {
+                id: 'l17',
+                category: '⏰ Uhrzeit',
+                title: 'Treffen am Nachmittag',
+                story: 'Die Schulglocke läutet um genau 14:15 Uhr. Das Basketballtraining beginnt 45 Minuten später. Um wie viel Uhr startet das Training?',
+                type: 'choice',
+                options: ['14:45 Uhr', '15:00 Uhr', '15:15 Uhr', '15:30 Uhr'],
+                correctAnswer: '15:00 Uhr',
+                hint: '15 Minuten nach 14:00 Uhr plus 45 Minuten ergibt genau eine volle Stunde (60 Minuten).',
+                explanation: '14:15 Uhr + 45 Minuten = 15:00 Uhr.'
+            },
+            {
+                id: 'l18',
+                category: '✏️ Mäppchen',
+                title: 'Ungespitzte Buntstifte',
+                story: 'In einem neuen Buntstift-Set befinden sich 20 Stifte. Maya spitzt 14 Stifte davon an. Wie viele Stifte sind noch ungespitzt?',
+                type: 'number',
+                correctAnswer: 6,
+                unit: 'Stifte',
+                placeholder: 'Stifte',
+                hint: 'Ziehe die 14 angespitzten Stifte von der Gesamtzahl 20 ab.',
+                explanation: '20 - 14 = 6 ungespitzte Stifte.'
+            },
+            {
+                id: 'l19',
+                category: '🔵 Murmelspiel',
+                title: 'Gerechtes Teilen',
+                story: 'Tom und Jonas finden zusammen 16 bunte Glasmurmeln und teilen sie absolut gleichmäßig auf. Wie viele Murmeln bekommt jeder?',
+                type: 'number',
+                correctAnswer: 8,
+                unit: 'Murmeln',
+                placeholder: 'Murmeln',
+                hint: 'Teile 16 durch 2 Personen.',
+                explanation: '16 ÷ 2 = 8 Murmeln pro Person.'
+            },
+            {
+                id: 'l20',
+                category: '🌾 Bauernhof',
+                title: 'Tiere im Hof',
+                story: 'Im Hof laufen 4 Hühner (je 2 Beine) und 1 Hund (4 Beine). Wie viele Beine haben alle Tiere im Hof zusammen?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Beine',
+                placeholder: 'Beine',
+                hint: '4 Hühner haben 4 · 2 = 8 Beine. Rechne noch die 4 Hundepfoten dazu.',
+                explanation: '(4 · 2) + 4 = 8 + 4 = 12 Beine.'
+            }
+        ]
+    },
+    {
+        id: 1,
+        key: 'mittel',
+        name: 'Mittel',
+        badge: '🟡',
+        title: 'Grundlagen & Anschauung',
+        color: 'sky',
+        description: 'Klare Zusammenhänge, anschauliche Waagen und einfache Umkehrrechnungen.',
+        tip: 'Tipp: Zerlege die Aufgabe in kleine Teilschritte. Zeichne dir die Situation kurz auf!',
+        tasks: [
+            {
+                id: 'm1',
+                category: '🔢 Zahlenrätsel',
+                title: 'Die Geheimzahl im Zahlenschloss',
+                story: 'Ein Vorhängeschloss hat einen zweistelligen Code. Die Einerziffer ist das Doppelte der Zehnerziffer. Beide Ziffern zusammengezählt ergeben genau 9. Wie lautet der geheime Code?',
+                type: 'number',
+                correctAnswer: 36,
+                unit: '',
+                placeholder: 'z. B. 36',
+                hint: 'Zehnerziffer + doppelte Zehnerziffer = 9. Probier für die erste Ziffer: 1, 2, 3...',
+                explanation: 'Ist die Zehnerziffer 3, so ist die Einerziffer 6 (das Doppelte). 3 + 6 = 9. Der Code ist 36.'
+            },
+            {
+                id: 'm2',
+                category: '⚖️ Waage-Logik',
+                title: 'Das Geheimnis der Ziegelsteine',
+                story: 'Auf einer ausbalancierten Balkenwaage liegt links genau 1 ganzer Ziegelstein. Auf der rechten Seite liegt ein 3/4-Ziegelstein und ein 1 kg schweres Gewicht. Die Waage steht im Gleichgewicht! Wie viel wiegt ein ganzer Ziegelstein?',
+                type: 'choice',
+                options: ['2 kg', '3 kg', '4 kg', '5 kg'],
+                correctAnswer: '4 kg',
+                hint: 'Wenn 1 ganzer Stein = 3/4 Stein + 1 kg ist, muss das fehlende 1/4 genau 1 kg wiegen.',
+                explanation: '1 ganzer Stein minus 3/4 Stein = 1/4 Stein. Wenn 1/4 Stein 1 kg wiegt, wiegt der ganze Stein 4 · 1 kg = 4 kg.'
+            },
+            {
+                id: 'm3',
+                category: '🧩 Muster & Reihen',
+                title: 'Die springende Folge',
+                story: 'Schau dir folgende Zahlenreihe an: <strong>4, 7, 13, 25, 49, ...</strong><br>Welche Zahl folgt als Nächstes?',
+                type: 'number',
+                correctAnswer: 97,
+                unit: '',
+                placeholder: 'Nächste Zahl',
+                hint: 'Achte auf den Abstand: +3, +6, +12, +24... Der Abstand verdoppelt sich bei jedem Schritt!',
+                explanation: 'Der Unterschied verdoppelt sich jedes Mal (+3, +6, +12, +24, +48). Also rechnen wir 49 + 48 = 97.'
+            },
+            {
+                id: 'm4',
+                category: '🐑 Tierische Gleichungen',
+                title: 'Hühner und Schafe auf der Wiese',
+                story: 'Bauer Paul sieht auf seiner Wiese nur Hühner (2 Beine) und Schafe (4 Beine). Er zählt insgesamt 6 Köpfe und 18 Beine. Wie viele Schafe stehen auf der Wiese?',
+                type: 'choice',
+                options: ['2 Schafe', '3 Schafe', '4 Schafe', '5 Schafe'],
+                correctAnswer: '3 Schafe',
+                hint: 'Hätten alle 6 Tiere nur 2 Beine, wären es 12 Beine. Es sind aber 18 Beine (6 Beine mehr). Jedes Schaf bringt 2 zusätzliche Beine mit.',
+                explanation: '18 - 12 = 6 Extra-Beine. 6 ÷ 2 = 3 Schafe (und 3 Hühner: 3·4 + 3·2 = 18 Beine).'
+            },
+            {
+                id: 'm5',
+                category: '🔢 Zahlenrätsel',
+                title: 'Das Alter von Jonas und Tim',
+                story: 'Jonas ist heute 4 Jahre älter als Tim. Zusammen sind die beiden Brüder 16 Jahre alt. Wie alt ist Tim?',
+                type: 'number',
+                correctAnswer: 6,
+                unit: 'Jahre',
+                placeholder: 'Tims Alter',
+                hint: 'Zieh den Unterschied (4 Jahre) zuerst von 16 ab. Teile das Ergebnis durch 2.',
+                explanation: '16 - 4 = 12 Jahre. 12 ÷ 2 = 6 Jahre für Tim (Jonas ist 6 + 4 = 10).'
+            },
+            {
+                id: 'm6',
+                category: '🏎️ Geschwindigkeit',
+                title: 'Die Radtour',
+                story: 'Felix fährt gleichmäßig mit 12 km/h mit dem Fahrrad. Wie viele Kilometer schafft er in genau 30 Minuten?',
+                type: 'choice',
+                options: ['4 km', '6 km', '8 km', '10 km'],
+                correctAnswer: '6 km',
+                hint: '30 Minuten sind eine halbe Stunde (1/2 Stunde). Rechne die Hälfte von 12 km/h.',
+                explanation: 'In einer ganzen Stunde fährt er 12 km. In 30 Minuten (halbe Stunde) also 12 ÷ 2 = 6 km.'
+            },
+            {
+                id: 'm7',
+                category: '🏃 Staffellauf',
+                title: 'Die 4x100m-Staffel',
+                story: 'Vier Sprinter laufen eine Staffel: Läufer 1 braucht 12 s, Läufer 2 braucht 13 s, Läufer 3 braucht 11 s und Läufer 4 braucht 14 s. Wie viele Sekunden dauerte der gesamte Lauf?',
+                type: 'number',
+                correctAnswer: 50,
+                unit: 'Sekunden',
+                placeholder: 'Sekunden',
+                hint: 'Addiere die vier Einzelzeiten: 12 + 13 + 11 + 14.',
+                explanation: '12 + 13 + 11 + 14 = 50 Sekunden.'
+            },
+            {
+                id: 'm8',
+                category: '🚢 Hafen-Logik',
+                title: 'Die Strickleiter am Schiff',
+                story: 'Ein Schiff liegt im Hafen. An der Bordwand hängt eine Strickleiter. Der Abstand von Sprosse zu Sprosse beträgt 25 cm. Die Flut kommt und das Meerwasser steigt um 50 cm. Wie viele Sprossen stehen nun zusätzlich unter Wasser?',
+                type: 'choice',
+                options: ['0 Sprossen', '1 Sprosse', '2 Sprossen', '3 Sprossen'],
+                correctAnswer: '0 Sprossen',
+                hint: 'Das Schiff schwimmt auf dem Wasser! Was passiert mit dem Schiff, wenn das Wasser steigt?',
+                explanation: 'Da das Schiff mit der Flut ansteigt, hebt sich die Strickleiter mit. Es steht keine einzige Sprosse zusätzlich unter Wasser.'
+            },
+            {
+                id: 'm9',
+                category: '🌿 Bio-Wachstum',
+                title: 'Der Seerosen-Teich',
+                story: 'Eine Seerosenfläche verdoppelt sich jeden Tag. Am 20. Tag ist der gesamte Teich vollständig mit Seerosen bedeckt. An welchem Tag war der Teich genau zur Hälfte bedeckt?',
+                type: 'choice',
+                options: ['Tag 10', 'Tag 15', 'Tag 18', 'Tag 19'],
+                correctAnswer: 'Tag 19',
+                hint: 'Wenn sich die Fläche jeden Tag verdoppelt, war sie am Tag davor genau halb so groß.',
+                explanation: 'Am Tag 20 ist der Teich voll. Da er sich täglich verdoppelt, war er am Tag davor (Tag 19) genau halb voll.'
+            },
+            {
+                id: 'm10',
+                category: '🔢 Quersumme',
+                title: 'Die Quersumme 10',
+                story: 'Wie heißt die kleinste zweistellige Zahl, deren Quersumme (Ziffernsumme) genau 10 beträgt?',
+                type: 'number',
+                correctAnswer: 19,
+                unit: '',
+                placeholder: 'Zahl',
+                hint: 'Die Zehnerziffer soll möglichst klein sein (1). Welche Ziffer muss dann an der Einerstelle stehen, damit die Summe 10 ist?',
+                explanation: 'Mit der Zehnerziffer 1 muss die Einerziffer 9 sein (1 + 9 = 10). Die kleinste Zahl ist 19.'
+            },
+            {
+                id: 'm11',
+                category: '📐 Geometrie',
+                title: 'Gleichseitiges Dreieck',
+                story: 'Ein gleichseitiges Dreieck (alle drei Seiten sind gleich lang) hat einen Umfang von genau 27 cm. Wie lang ist eine einzelne Seite?',
+                type: 'number',
+                correctAnswer: 9,
+                unit: 'cm',
+                placeholder: 'Seitenlänge in cm',
+                hint: 'Teile den Gesamtumfang (27 cm) durch die 3 gleichen Seiten.',
+                explanation: 'Umfang = 3 · a ⇒ a = 27 ÷ 3 = 9 cm.'
+            },
+            {
+                id: 'm12',
+                category: '🍬 Bonbons',
+                title: 'Die Bonbontüte',
+                story: 'In einer Tüte befinden sich rote und grüne Bonbons. Es gibt 8 rote Bonbons, und das ist genau ein Drittel (1/3) aller Bonbons in der Tüte. Wie viele Bonbons sind insgesamt in der Tüte?',
+                type: 'number',
+                correctAnswer: 24,
+                unit: 'Bonbons',
+                placeholder: 'Gesamtzahl',
+                hint: 'Wenn 1 Drittel gleich 8 ist, sind 3 Drittel das Dreifache (8 · 3).',
+                explanation: 'Gesamtmenge = 8 · 3 = 24 Bonbons.'
+            },
+            {
+                id: 'm13',
+                category: '🪵 Handwerk',
+                title: 'Das Holzbrett zersägen',
+                story: 'Um ein langes Holzbrett mit einer Handsäge in 2 Teile zu teilen, braucht Florian genau 3 Minuten. Wie viele Minuten braucht er bei gleichem Sägetempo, um ein gleichartiges Brett in 4 Teile zu zersägen?',
+                type: 'choice',
+                options: ['6 Minuten', '8 Minuten', '9 Minuten', '12 Minuten'],
+                correctAnswer: '9 Minuten',
+                hint: 'Für 2 Teile braucht man 1 Schnitt (3 min). Wie viele Schnitte braucht man, um ein Brett in 4 Teile zu zerlegen?',
+                explanation: 'Für 4 Teile benötigt man 3 Schnitte. 3 Schnitte · 3 Minuten = 9 Minuten.'
+            },
+            {
+                id: 'm14',
+                category: '🔢 Zahlenrätsel',
+                title: 'Zwei Nachbarzahlen',
+                story: 'Zwei aufeinanderfolgende ganze Zahlen haben zusammengezählt die Summe 41. Wie heißt die kleinere der beiden Zahlen?',
+                type: 'number',
+                correctAnswer: 20,
+                unit: '',
+                placeholder: 'Kleinere Zahl',
+                hint: 'Zieh 1 von 41 ab (40) und teile durch 2. Probe: 20 + 21 = 41.',
+                explanation: 'x + (x + 1) = 41 ⇒ 2x = 40 ⇒ x = 20. Die Zahlen sind 20 und 21.'
+            },
+            {
+                id: 'm15',
+                category: '💰 Sparen',
+                title: 'Das neue Computerspiel',
+                story: 'Leon spart von seinem Taschengeld jede Woche genau 4 Euro. Wie viele Wochen muss er sparen, um sich ein neues Computerspiel für 48 Euro leisten zu können?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Wochen',
+                placeholder: 'Wochen',
+                hint: 'Rechne den Zielbetrag geteilt durch den wöchentlichen Sparbetrag (48 ÷ 4).',
+                explanation: '48 € ÷ 4 €/Woche = 12 Wochen.'
+            },
+            {
+                id: 'm16',
+                category: '🎲 Würfel-Geheimnis',
+                title: 'Augenzahl auf dem Tisch',
+                story: 'Ein normaler Würfel liegt auf dem Tisch. Du blickst von oben darauf und siehst eine 5. Gegenüberliegende Seiten ergeben immer 7. Welche Zahl berührt den Tisch?',
+                type: 'number',
+                correctAnswer: 2,
+                unit: '',
+                placeholder: 'Zahl',
+                hint: 'Gegenüberliegende Seiten ergeben 7: Was ist 7 - 5?',
+                explanation: '7 - 5 = 2. Die 2 liegt auf dem Tisch auf.'
+            },
+            {
+                id: 'm17',
+                category: '⚽ Sportfest',
+                title: 'Fußball und Basketball',
+                story: 'In einer Klasse mit 28 Jugendlichen spielen 16 Fußball und 14 Basketball. Genau 6 Jugendliche spielen beides. Wie viele Jugendliche in der Klasse spielen weder Fußball noch Basketball?',
+                type: 'number',
+                correctAnswer: 4,
+                unit: 'Jugendliche',
+                placeholder: 'Anzahl',
+                hint: 'Wer mindestens eine Sportart macht: 16 + 14 - 6 = 24. Wie viele fehlen noch bis 28?',
+                explanation: 'Sporttreibende: 16 + 14 - 6 = 24 Schüler. 28 - 24 = 4 Jugendliche machen keines von beiden.'
+            },
+            {
+                id: 'm18',
+                category: '📏 Flächen',
+                title: 'Die quadratische Fliese',
+                story: 'Eine quadratische Badezimmerfliese hat eine Seitenlänge von 20 cm. Welchen Flächeninhalt hat diese Fliese in Quadratzentimetern (cm²)?',
+                type: 'number',
+                correctAnswer: 400,
+                unit: 'cm²',
+                placeholder: 'Fläche in cm²',
+                hint: 'Fläche eines Quadrats = Seite mal Seite (20 · 20).',
+                explanation: 'A = 20 cm · 20 cm = 400 cm².'
+            },
+            {
+                id: 'm19',
+                category: '⏰ Winkel & Uhr',
+                title: 'Winkel des Minutenzeigers',
+                story: 'Ein Ziffernblatt hat 360 Grad im Vollkreis. Wie viel Grad überstreicht der große Minutenzeiger in genau 20 Minuten?',
+                type: 'number',
+                correctAnswer: 120,
+                unit: 'Grad',
+                placeholder: 'Grad (°)',
+                hint: 'In 60 Minuten wandert er um 360°. 20 Minuten sind genau ein Drittel (1/3) einer Stunde.',
+                explanation: '360° ÷ 3 = 120 Grad.'
+            },
+            {
+                id: 'm20',
+                category: '🍪 Keksdose',
+                title: 'Das Gewicht der Dose',
+                story: 'Eine mit Keksen voll gefüllte Dose wiegt 500 g. Wenn die Dose nur noch zur Hälfte mit Keksen gefüllt ist, wiegt sie 300 g. Wie viel Gramm wiegt die leere Dose alleine?',
+                type: 'number',
+                correctAnswer: 100,
+                unit: 'g',
+                placeholder: 'Gramm',
+                hint: 'Der Unterschied (500 g - 300 g = 200 g) ist genau das Gewicht der halben Keksmenge. Die ganzen Kekse wiegen also 400 g.',
+                explanation: 'Halbe Kekse = 200 g ⇒ Ganze Kekse = 400 g. Leere Dose = 500 g - 400 g = 100 g.'
+            }
+        ]
+    },
+    {
+        id: 2,
+        key: 'schwer',
+        name: 'Schwer',
+        badge: '🟠',
+        title: 'Praxis-Logik & Dreisatz',
+        color: 'amber',
+        description: 'Praktische Textaufgaben, antiproportionaler Dreisatz, Prozente und Geometrie.',
+        tip: 'Tipp: Achte auf Einheiten und stelle einen kurzen Dreisatz oder eine kleine Tabelle auf.',
+        tasks: [
+            {
+                id: 's1',
+                category: '🛒 Alltag & Dreisatz',
+                title: 'Die Baustellen-Schaufeln',
+                story: '4 Bauarbeiter schaufeln in 3 Stunden eine Baugrube aus. Wie viele Stunden hätten 6 Bauarbeiter bei gleichem Tempo für die gleiche Grube gebraucht?',
+                type: 'number',
+                correctAnswer: 2,
+                unit: 'Stunden',
+                placeholder: 'z. B. 2',
+                hint: 'Antiproportional: Mehr Arbeiter brauchen WENIGER Zeit. Gesamtaufwand = 4 · 3 Arbeiter-Stunden.',
+                explanation: 'Gesamtaufwand: 4 Arbeiter · 3 Stunden = 12 Stunden Gesamtzeit. 12 ÷ 6 Arbeiter = 2 Stunden.'
+            },
+            {
+                id: 's2',
+                category: '🏷️ Prozentrechnung',
+                title: 'Der zweifache Rabatt',
+                story: 'Ein Paar Sneakers kostet regulär 80 €. Im Schlussverkauf wird der Preis um 20 % gesenkt. An der Kasse gibt es nochmals 10 % Rabatt auf den bereits reduzierten Preis. Wie viel bezahlt man?',
+                type: 'choice',
+                options: ['56,00 €', '57,60 €', '60,00 €', '64,00 €'],
+                correctAnswer: '57,60 €',
+                hint: 'Erst 20% von 80 € abziehen (80 - 16 = 64 €). Dann 10% von 64 € abziehen (64 - 6,40 €).',
+                explanation: '1. Reduzierung: 80 € - 20% = 64 €. 2. Reduzierung: 64 € - 10% (6,40 €) = 57,60 €.'
+            },
+            {
+                id: 's3',
+                category: '📏 Umfang & Quadrat',
+                title: 'Der Zaun um den Garten',
+                story: 'Ein quadratischer Gemüsegarten hat einen Flächeninhalt von 144 m². Wie viele Meter Zaun benötigt man, um ihn einmal komplett einzuzäunen?',
+                type: 'number',
+                correctAnswer: 48,
+                unit: 'Meter',
+                placeholder: 'Meter Zaun',
+                hint: 'Welche Zahl mal sich selbst ergibt 144? Der Zaun entspricht dem Umfang (4 mal Seitenlänge).',
+                explanation: 'Seitenlänge a = √144 = 12 m. Der Umfang ist U = 4 · 12 m = 48 Meter.'
+            },
+            {
+                id: 's4',
+                category: '🏎️ Zeit & Strecke',
+                title: 'Der Schulweg',
+                story: 'Mia fährt mit durchschnittlich 15 km/h zur Schule und braucht genau 20 Minuten. Wie viele Kilometer ist ihr Schulweg lang?',
+                type: 'choice',
+                options: ['3 km', '4 km', '5 km', '6 km'],
+                correctAnswer: '5 km',
+                hint: '20 Minuten sind 1/3 einer Stunde. Rechne 15 km/h geteilt durch 3.',
+                explanation: '15 km/h · (20/60 h) = 15 · (1/3) = 5 km.'
+            },
+            {
+                id: 's5',
+                category: '🔢 Logikrätsel',
+                title: 'Der Bücherstapel',
+                story: 'Auf einem Tisch liegt ein Stapel Bücher. Von oben gezählt ist das Mathebuch das 5. Buch. Von unten gezählt ist es das 8. Buch. Wie viele Bücher liegen insgesamt auf dem Stapel?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Bücher',
+                placeholder: 'Anzahl',
+                hint: 'Über dem Buch liegen 4 Bücher, darunter 7 Bücher. Zähle das Buch selbst noch dazu: 4 + 7 + 1.',
+                explanation: '4 darüber + 7 darunter + 1 Mathebuch = 12 Bücher (oder 5 + 8 - 1 = 12).'
+            },
+            {
+                id: 's6',
+                category: '🍕 Bruchrechnung',
+                title: 'Die Pizza-Reste',
+                story: 'Von einer Pizza ist noch genau die Hälfte (1/2) übrig. Drei Freunde teilen sich diesen Rest zu gleichen Teilen. Welcher Bruchteil der gesamten Pizza ist das für jeden?',
+                type: 'choice',
+                options: ['1/3', '1/5', '1/6', '1/8'],
+                correctAnswer: '1/6',
+                hint: 'Teile 1/2 durch 3 (oder multipliziere 1/2 mit 1/3).',
+                explanation: '(1/2) ÷ 3 = (1/2) · (1/3) = 1/6.'
+            },
+            {
+                id: 's7',
+                category: '🚰 Zufluss-Logik',
+                title: 'Der gefüllte Wassertank',
+                story: 'Pumpe A füllt einen Wassertank alleine in 6 Stunden. Die stärkere Pumpe B füllt denselben Tank alleine in 3 Stunden. Nach wie vielen Stunden ist der Tank voll, wenn beide Pumpen gleichzeitig pumpen?',
+                type: 'number',
+                correctAnswer: 2,
+                unit: 'Stunden',
+                placeholder: 'Stunden',
+                hint: 'In 1 Stunde schafft Pumpe A 1/6 und Pumpe B 2/6 (1/3) des Tanks. Zusammen: 3/6 = 1/2 pro Stunde.',
+                explanation: 'Gemeinsame Füllrate: 1/6 + 2/6 = 3/6 = 1/2 Tank pro Stunde. Voll in 2 Stunden.'
+            },
+            {
+                id: 's8',
+                category: '📐 Flächenvergrößerung',
+                title: 'Das vergrößerte Rechteck',
+                story: 'Ein Rechteck hat die Seiten 4 cm und 6 cm (Fläche: 24 cm²). Beide Seitenlängen werden verdoppelt. Welchen Flächeninhalt in cm² hat das neue Rechteck?',
+                type: 'number',
+                correctAnswer: 96,
+                unit: 'cm²',
+                placeholder: 'cm²',
+                hint: 'Die neuen Seiten sind 8 cm und 12 cm. Oder: Bei doppelter Seitenlänge vervierfacht (· 4) sich der Flächeninhalt!',
+                explanation: 'A_neu = 8 cm · 12 cm = 96 cm² (oder 24 cm² · 4 = 96 cm²).'
+            },
+            {
+                id: 's9',
+                category: '📊 Statistik',
+                title: 'Der Notendurchschnitt',
+                story: 'In einer Mathearbeit gab es vier Einsen (Note 1), sechs Zweien (Note 2) und zehn Dreien (Note 3). Wie lautet der exakte Notendurchschnitt?',
+                type: 'choice',
+                options: ['2,1', '2,3', '2,5', '2,7'],
+                correctAnswer: '2,3',
+                hint: 'Rechne die Summe aller Notenpunkte: (4·1) + (6·2) + (10·3) = 46. Teile durch die 20 Schüler.',
+                explanation: 'Summe: 4 + 12 + 30 = 46. Durchschnitt: 46 ÷ 20 = 2,3.'
+            },
+            {
+                id: 's10',
+                category: '🏷️ Prozentrechnung',
+                title: 'Preise rauf und runter',
+                story: 'Ein Snowboard kostete 200 €. Im Winter wird der Preis um 10 % erhöht. Im Frühling wird der neue Preis um 10 % gesenkt. Wie viel Euro kostet das Snowboard jetzt?',
+                type: 'number',
+                correctAnswer: 198,
+                unit: '€',
+                placeholder: 'Preis in Euro',
+                hint: '200 € + 10% = 220 €. Nun 10% von 220 € (22 €) abziehen.',
+                explanation: '220 € - 22 € = 198 € (Prozentsätze beziehen sich auf unterschiedliche Grundwerte!).'
+            },
+            {
+                id: 's11',
+                category: '🏎️ Tempo & Einheiten',
+                title: 'Der schnelle Sprint',
+                story: 'Ein Radfahrer fährt im Schlusssprint mit genau 18 km/h. Wie viele Meter legt er in genau 10 Sekunden zurück?',
+                type: 'number',
+                correctAnswer: 50,
+                unit: 'Meter',
+                placeholder: 'Meter',
+                hint: 'Rechne km/h in m/s um, indem du durch 3,6 teilst: 18 ÷ 3,6 = 5 m/s. Multipliziere mit 10.',
+                explanation: '18 km/h = 5 m/s. In 10 Sekunden: 5 m/s · 10 s = 50 Meter.'
+            },
+            {
+                id: 's12',
+                category: '🪜 Stufen-Rätsel',
+                title: 'Die geheimnisvolle Treppe',
+                story: 'Eine Treppe hat zwischen 10 und 15 Stufen. Geht man 2 Stufen auf einmal, bleibt am Ende 1 Stufe übrig. Geht man 3 Stufen auf einmal, bleiben am Ende 2 Stufen übrig. Wie viele Stufen hat die Treppe?',
+                type: 'number',
+                correctAnswer: 11,
+                unit: 'Stufen',
+                placeholder: 'Stufenanzahl',
+                hint: 'Teste die ungeraden Zahlen zwischen 10 und 15: 11 ÷ 3 = 3 Rest 2!',
+                explanation: '11 ÷ 2 = 5 Rest 1; 11 ÷ 3 = 3 Rest 2. Die Treppe hat genau 11 Stufen.'
+            },
+            {
+                id: 's13',
+                category: '🍹 Mischung',
+                title: 'Der Fruchtsaft-Mix',
+                story: 'Aus 4 Litern reinem Orangensaft (100 %) und 6 Litern Mineralwasser wird eine Saftschorle gemischt. Wie viel Prozent Fruchtsaftgehalt hat die fertige Schorle?',
+                type: 'number',
+                correctAnswer: 40,
+                unit: '%',
+                placeholder: 'Prozent',
+                hint: 'Die Gesamtmenge beträgt 4 + 6 = 10 Liter. Welcher Anteil sind 4 Liter von 10 Litern?',
+                explanation: '4 Liter / 10 Liter = 0,4 = 40 %.'
+            },
+            {
+                id: 's14',
+                category: '🎲 Geometrie & Körper',
+                title: 'Der bemalte Holzwürfel',
+                story: 'Ein Holzwürfel mit 3 cm Kantenlänge wird komplett rot angemalt und dann in 27 kleine 1-cm-Würfel zersägt. Wie viele dieser kleinen Würfel haben genau EINE rot angemalte Fläche?',
+                type: 'number',
+                correctAnswer: 6,
+                unit: 'Würfel',
+                placeholder: 'Anzahl',
+                hint: 'Nur der mittlere Würfel jeder der 6 Außenflächen hat genau 1 gefärbte Seite.',
+                explanation: 'Ein Würfel hat 6 Seitenflächen. Auf jeder Fläche gibt es genau 1 Mittelstück: 6 · 1 = 6 Würfel.'
+            },
+            {
+                id: 's15',
+                category: '🧙 Mathe-Zaubertrick',
+                title: 'Die verblüffende Rechnung',
+                story: 'Denke dir eine beliebige Zahl x. Nimm sie mal 3, addiere 12, teile das Ganze durch 3 und ziehe am Ende deine gedachte Zahl x wieder ab. Welche Zahl kommt IMMER heraus?',
+                type: 'number',
+                correctAnswer: 4,
+                unit: '',
+                placeholder: 'Ergebnis',
+                hint: 'Formel: (3x + 12) ÷ 3 - x. Teile die Klammer durch 3: x + 4 - x.',
+                explanation: '(3x + 12)/3 - x = x + 4 - x = 4.'
+            },
+            {
+                id: 's16',
+                category: '⭕ Kreis & Umfang',
+                title: 'Der runde Tisch',
+                story: 'Eine runde Tischplatte hat einen Radius von r = 7 cm. Berechne ihren Umfang mit dem Näherungswert π ≈ 22/7 (Formel: U = 2 · π · r). Wie groß ist der Umfang?',
+                type: 'number',
+                correctAnswer: 44,
+                unit: 'cm',
+                placeholder: 'Umfang in cm',
+                hint: 'U = 2 · (22/7) · 7. Die Sieben kürzt sich heraus!',
+                explanation: 'U = 2 · (22/7) · 7 = 2 · 22 = 44 cm.'
+            },
+            {
+                id: 's17',
+                category: '🐌 Kletter-Logik',
+                title: 'Die Schnecke im Brunnen',
+                story: 'Ein Brunnen ist 10 m tief. Eine Schnecke klettert tagsüber 3 m nach oben, rutscht aber nachts im Schlaf wieder 2 m nach unten (Gewinn: 1 m pro 24 h). An welchem Tag erreicht sie erstmals den oberen Rand?',
+                type: 'choice',
+                options: ['Am 7. Tag', 'Am 8. Tag', 'Am 9. Tag', 'Am 10. Tag'],
+                correctAnswer: 'Am 8. Tag',
+                hint: 'Nach 7 vollen Tagen und Nächten ist sie auf 7 m. Am 8. Tag klettert sie tagsüber 3 m: 7 + 3 = 10 m (oben angekommen, bevor sie rutschen kann)!',
+                explanation: 'Nach 7 Tagen steht sie bei 7 m. Am 8. Tag klettert sie 3 m und erreicht bei 10 m den Rand.'
+            },
+            {
+                id: 's18',
+                category: '🐴 Futtervorrat',
+                title: 'Der Futtervorrat auf dem Gestüt',
+                story: 'Ein Heuvorrat reicht für 15 Pferde genau 20 Tage lang. Wie viele Tage reicht derselbe Heuvorrat, wenn 25 Pferde versorgt werden müssen?',
+                type: 'number',
+                correctAnswer: 12,
+                unit: 'Tage',
+                placeholder: 'Tage',
+                hint: 'Antiproportionaler Dreisatz: Gesamtvorrat = 15 · 20 = 300 Pferdetage. Teile durch 25.',
+                explanation: '300 Pferdetage ÷ 25 Pferde = 12 Tage.'
+            },
+            {
+                id: 's19',
+                category: '👨‍👧 Generationen',
+                title: 'Vater und Tochter',
+                story: 'Herr Meier ist heute 36 Jahre alt, seine Tochter Sophie ist 6 Jahre alt. In wie vielen Jahren wird Herr Meier genau dreimal so alt sein wie seine Tochter?',
+                type: 'number',
+                correctAnswer: 9,
+                unit: 'Jahre',
+                placeholder: 'Jahre',
+                hint: 'In x Jahren: 36 + x = 3 · (6 + x) ⇒ 36 + x = 18 + 3x.',
+                explanation: '2x = 18 ⇒ x = 9 Jahre. Probe: Mit 45 Jahren ist der Vater 3-mal so alt wie Sophie mit 15 Jahren.'
+            },
+            {
+                id: 's20',
+                category: '📐 Pythagoras',
+                title: 'Die Diagonale im Rechteck',
+                story: 'Zwei rechtwinklig aufeinandertreffende Seiten eines Beetes messen 6 m und 8 m. Wie lang ist die direkte diagonale Abkürzung quer durch das Beet?',
+                type: 'number',
+                correctAnswer: 10,
+                unit: 'Meter',
+                placeholder: 'Meter',
+                hint: 'Satz des Pythagoras: c² = a² + b² = 6² + 8² = 36 + 64 = 100.',
+                explanation: 'c = √100 = 10 Meter.'
+            }
+        ]
+    },
+    {
+        id: 3,
+        key: 'profi',
+        name: 'Profi',
+        badge: '🔴',
+        title: 'Terme, Gleichungen & Kombinatorik',
+        color: 'purple',
+        description: 'Knobelaufgaben mit Gleichungsansatz, Winkelsätzen, Kombinatorik und Mischungen.',
+        tip: 'Tipp: Stelle für die unbekannte Größe eine Variable (z. B. x) auf.',
+        tasks: [
+            {
+                id: 'p1',
+                category: '📐 Geometrie & Winkel',
+                title: 'Das gleichschenklige Dreieck',
+                story: 'In einem gleichschenkligen Dreieck ist der Spitzenwinkel γ viermal so groß wie jeder der beiden Basiswinkel (α und β). Wie groß ist der Spitzenwinkel γ in Grad?',
+                type: 'number',
+                correctAnswer: 120,
+                unit: 'Grad (°)',
+                placeholder: 'z. B. 120',
+                hint: 'Winkelsumme = 180°. Wenn die Basiswinkel jeweils x sind, ist der Spitzenwinkel 4x. Also: x + x + 4x = 180°.',
+                explanation: '6x = 180° ⇒ x = 30° (Basiswinkel). Der Spitzenwinkel γ ist 4 · 30° = 120°.'
+            },
+            {
+                id: 'p2',
+                category: '🤝 Kombinatorik',
+                title: 'Das Schachturnier',
+                story: 'In der Schach-AG treten 8 Personen an. Jede Person spielt genau einmal gegen jede andere. Wie viele Partien werden insgesamt gespielt?',
+                type: 'choice',
+                options: ['24 Partien', '28 Partien', '32 Partien', '56 Partien'],
+                correctAnswer: '28 Partien',
+                hint: 'Jeder der 8 Spieler hat 7 Gegner (8 · 7 = 56). Da in jeder Partie 2 Personen spielen, teilt man durch 2.',
+                explanation: 'Formel für Händeschütteln: (8 · 7) ÷ 2 = 56 ÷ 2 = 28 Partien.'
+            },
+            {
+                id: 'p3',
+                category: '💧 Mischungsrechnung',
+                title: 'Die verdünnte Salzlösung',
+                story: 'Eine Chemikerin hat 3 Liter einer 20%igen Salzlösung. Sie möchte die Lösung mit Wasser so verdünnen, dass eine 10%ige Lösung entsteht. Wie viele Liter reines Wasser muss sie dazuschütten?',
+                type: 'choice',
+                options: ['1,5 Liter', '2 Liter', '3 Liter', '4 Liter'],
+                correctAnswer: '3 Liter',
+                hint: 'In 3 Litern sind 20% = 0,6 Liter reines Salz. Damit 0,6 Liter 10% ausmachen, muss die Gesamtmenge 6 Liter sein.',
+                explanation: '0,6 Liter Salz sind 10% von 6 Litern. 6 Liter Zielvolumen - 3 Liter vorhandene Lösung = 3 Liter Wasser.'
+            },
+            {
+                id: 'p4',
+                category: '🔢 Logik & Quadratzahlen',
+                title: 'Das Produkt benachbarter Zahlen',
+                story: 'Zwei aufeinanderfolgende ungerade Zahlen ergeben miteinander multipliziert genau 399. Welche ist die kleinere der beiden Zahlen?',
+                type: 'number',
+                correctAnswer: 19,
+                unit: '',
+                placeholder: 'z. B. 19',
+                hint: 'Überlege: 20 · 20 = 400. Welche zwei ungeraden Nachbarzahlen liegen direkt bei 20?',
+                explanation: '19 · 21 = 399. Die kleinere der beiden ungeraden Zahlen ist 19.'
+            },
+            {
+                id: 'p5',
+                category: '🏃 Kinematik & Treffpunkt',
+                title: 'Zwei Züge auf der Modellbahn',
+                story: 'Zwei Modellzüge fahren auf einer 90 m langen geraden Strecke aufeinander zu. Zug A fährt mit 2 m/s, Zug B mit 3 m/s. Nach wie vielen Sekunden treffen sie aufeinander?',
+                type: 'number',
+                correctAnswer: 18,
+                unit: 'Sekunden',
+                placeholder: 'Sekunden',
+                hint: 'Sie fahren aufeinander zu, ihre Geschwindigkeiten addieren sich (2 + 3 = 5 m/s). Zeit = Strecke ÷ Geschwindigkeit.',
+                explanation: 'Annäherung mit 5 m/s. Zeit: 90 m ÷ 5 m/s = 18 Sekunden.'
+            },
+            {
+                id: 'p6',
+                category: '⚖️ Gleichungen im Text',
+                title: 'Die Spardose der Geschwister',
+                story: 'Lina und Max haben zusammen 50 Euro gespart. Lina hat 14 Euro mehr als Max. Wie viel Euro hat Max?',
+                type: 'number',
+                correctAnswer: 18,
+                unit: 'Euro',
+                placeholder: 'Betrag Max',
+                hint: 'Zieh den Überschuss (14 €) von 50 € ab (Rest: 36 €) und teile durch 2.',
+                explanation: '50 - 14 = 36 €. 36 ÷ 2 = 18 € für Max (Lina hat 18 + 14 = 32 €; 18 + 32 = 50 €).'
+            },
+            {
+                id: 'p7',
+                category: '🕯️ Kerzen-Gleichung',
+                title: 'Ungleiche Brenndauer',
+                story: 'Zwei gleich lange Kerzen werden gleichzeitig angezündet. Kerze A brennt in 4 Stunden ab, Kerze B in 3 Stunden. Nach wie vielen Stunden ist Kerze A genau doppelt so lang wie Kerze B?',
+                type: 'choice',
+                options: ['2,0 Stunden', '2,4 Stunden', '2,5 Stunden', '2,8 Stunden'],
+                correctAnswer: '2,4 Stunden',
+                hint: 'Restlänge nach t Stunden: A = 1 - t/4 und B = 1 - t/3. Gleichung: 1 - t/4 = 2 · (1 - t/3).',
+                explanation: '1 - t/4 = 2 - 2t/3 ⇒ 5t/12 = 1 ⇒ t = 12/5 = 2,4 Stunden.'
+            },
+            {
+                id: 'p8',
+                category: '📊 Statistik & Schnitt',
+                title: 'Das Durchschnittsalter',
+                story: 'In einer Gruppe von 5 Jugendlichen beträgt das Durchschnittsalter genau 20 Jahre. Kommt eine 6. Person hinzu, steigt das Durchschnittsalter aller 6 Personen auf 22 Jahre. Wie alt ist die 6. Person?',
+                type: 'number',
+                correctAnswer: 32,
+                unit: 'Jahre',
+                placeholder: 'Alter',
+                hint: 'Gesamtsumme vorher: 5 · 20 = 100 Jahre. Gesamtsumme nachher: 6 · 22 = 132 Jahre. Bilde die Differenz.',
+                explanation: '132 - 100 = 32 Jahre.'
+            },
+            {
+                id: 'p9',
+                category: '🔄 Zahlenspiegelung',
+                title: 'Die vertauschten Ziffern',
+                story: 'Eine zweistellige Zahl ist um genau 27 größer als die Zahl, die entsteht, wenn man ihre beiden Ziffern vertauscht. Die Summe der beiden Ziffern ist 9. Wie lautet die ursprüngliche Zahl?',
+                type: 'number',
+                correctAnswer: 63,
+                unit: '',
+                placeholder: 'Zahl',
+                hint: 'Die Ziffernsumme ist 9: Mögliche Zahlen sind 81 (81-18=63), 72 (72-27=45), 63 (63-36=27)...',
+                explanation: '63 hat die Ziffernsumme 6 + 3 = 9. Vertauscht: 36. Differenz: 63 - 36 = 27.'
+            },
+            {
+                id: 'p10',
+                category: '⏰ Uhr & Winkel',
+                title: 'Winkel um 15:30 Uhr',
+                story: 'Wie groß ist der kleinere Winkel zwischen dem Stundenzeiger und dem Minutenzeiger einer Uhr um genau 15:30 Uhr?',
+                type: 'choice',
+                options: ['70°', '75°', '80°', '85°'],
+                correctAnswer: '75°',
+                hint: 'Der Minutenzeiger steht bei der 6 (180°). Der Stundenzeiger steht genau auf halbem Weg zwischen 3 und 4 (bei 105°).',
+                explanation: '180° - 105° = 75°.'
+            },
+            {
+                id: 'p11',
+                category: '🚠 Harmonisches Mittel',
+                title: 'Die Pendelbahn',
+                story: 'Eine Berggondel fährt die Strecke bergauf mit 4 m/s und dieselbe Strecke bergab mit 6 m/s. Wie hoch ist ihre mittlere Durchschnittsgeschwindigkeit für Hin- und Rückfahrt?',
+                type: 'number',
+                correctAnswer: 4.8,
+                unit: 'm/s',
+                placeholder: 'z. B. 4.8',
+                hint: 'Harmonisches Mittel zweier Geschwindigkeiten auf gleicher Teilstrecke: (2 · v1 · v2) ÷ (v1 + v2).',
+                explanation: '(2 · 4 · 6) ÷ (4 + 6) = 48 ÷ 10 = 4,8 m/s.'
+            },
+            {
+                id: 'p12',
+                category: '🔢 Kombinatorik',
+                title: 'Das 4-stellige Zahlenschloss',
+                story: 'Ein Zahlenschloss hat 4 Rädchen mit Ziffern von 0 bis 9. Wie viele verschiedene 4-stellige Codes kann man bilden, bei denen alle 4 Ziffern unterschiedlich sind?',
+                type: 'number',
+                correctAnswer: 5040,
+                unit: 'Codes',
+                placeholder: 'Anzahl Codes',
+                hint: 'Für die 1. Stelle gibt es 10 Ziffern, für die 2. Stelle 9, für die 3. Stelle 8 und für die 4. Stelle 7 (10 · 9 · 8 · 7).',
+                explanation: '10 · 9 · 8 · 7 = 5040 verschiedene Codes.'
+            },
+            {
+                id: 'p13',
+                category: '🧪 Dreifach-Filter',
+                title: 'Die Filteranlage',
+                story: 'Eine Filterstufe filtert genau 50 % der vorhandenen Schmutzpartikel heraus. Eine Flüssigkeit durchläuft drei solcher Filterstufen nacheinander. Wie viel Prozent der ursprünglichen Schmutzpartikel sind danach noch übrig?',
+                type: 'choice',
+                options: ['12,5 %', '25,0 %', '33,3 %', '50,0 %'],
+                correctAnswer: '12,5 %',
+                hint: 'Nach Stufe 1: 50%. Nach Stufe 2: 25%. Nach Stufe 3: die Hälfte von 25%.',
+                explanation: '0,5 · 0,5 · 0,5 = 0,125 = 12,5 %.'
+            },
+            {
+                id: 'p14',
+                category: '💶 Lineare Gleichung',
+                title: 'Münzen im Sparschwein',
+                story: 'In einer Spardose befinden sich ausschließlich 1-Euro- und 2-Euro-Münzen, zusammen genau 25 Münzen. Ihr Gesamtwert beträgt 40 Euro. Wie viele 2-Euro-Münzen sind in der Dose?',
+                type: 'number',
+                correctAnswer: 15,
+                unit: 'Münzen',
+                placeholder: 'Anzahl 2-€-Münzen',
+                hint: 'Wären alle 25 Münzen nur 1-Euro-Stücke, hätte man 25 €. Jeder 2-Euro-Taler bringt 1 € extra (40 - 25 = 15).',
+                explanation: 'x + 2y = 40 und x + y = 25 ⇒ y = 15 (15 Zwei-Euro-Münzen und 10 Ein-Euro-Münzen).'
+            },
+            {
+                id: 'p15',
+                category: '📐 Geometrie & Außenwinkel',
+                title: 'Der Außenwinkelsatz',
+                story: 'In einem Dreieck misst ein Innenwinkel 40°. Der Außenwinkel an einer der anderen beiden Ecken beträgt 110°. Wie groß ist der dritte Innenwinkel in Grad?',
+                type: 'number',
+                correctAnswer: 70,
+                unit: 'Grad (°)',
+                placeholder: 'Grad',
+                hint: 'Ein Außenwinkel ist gleich der Summe der beiden nicht anliegenden Innenwinkel: 110° - 40° = ?',
+                explanation: '110° - 40° = 70° (oder Innenwinkel-Nebenwinkel: 180° - 110° = 70°; dritter Winkel: 180° - 40° - 70° = 70°).'
+            },
+            {
+                id: 'p16',
+                category: '🧊 Quader-Lackierung',
+                title: 'Der lackierte Quader',
+                story: 'Ein Quader mit den Maßen 3 cm × 4 cm × 5 cm wird aus 60 kleinen 1-cm-Würfeln gebaut und außen komplett blau lackiert. Wie viele Würfel im Inneren haben keine einzige blaue Fläche?',
+                type: 'number',
+                correctAnswer: 6,
+                unit: 'Würfel',
+                placeholder: 'Anzahl',
+                hint: 'Die inneren Würfel bilden einen kleineren Quader mit den Seiten (3-2) × (4-2) × (5-2).',
+                explanation: '(3 - 2) · (4 - 2) · (5 - 2) = 1 · 2 · 3 = 6 unbemalte Innenwürfel.'
+            },
+            {
+                id: 'p17',
+                category: '🔢 Primzahlen',
+                title: 'Die Primzahl dazwischen',
+                story: 'Betrachte die Primzahlen 13 und 19. Welche Primzahl liegt genau in der Zahlenmitte zwischen diesen beiden Zahlen?',
+                type: 'choice',
+                options: ['15', '16', '17', 'Keine davon'],
+                correctAnswer: '17',
+                hint: 'Welche Zahl liegt zwischen 13 und 19 und hat keine weiteren Teiler außer 1 und sich selbst?',
+                explanation: '17 ist eine Primzahl und liegt im Bereich zwischen 13 und 19.'
+            },
+            {
+                id: 'p18',
+                category: '⛵ Flussfahrt',
+                title: 'Gegen die Strömung',
+                story: 'Ein Motorboot fährt mit eigener Motorgeschwindigkeit von 18 km/h flussaufwärts gegen eine Wasserströmung von 2 km/h. Nach wie vielen Stunden hat das Boot 32 km zurückgelegt?',
+                type: 'number',
+                correctAnswer: 2,
+                unit: 'Stunden',
+                placeholder: 'Stunden',
+                hint: 'Effektive Geschwindigkeit gegen die Strömung: 18 km/h - 2 km/h = 16 km/h. Zeit = Strecke ÷ Geschwindigkeit.',
+                explanation: '32 km ÷ 16 km/h = 2 Stunden.'
+            },
+            {
+                id: 'p19',
+                category: '⚡ Potenzen',
+                title: 'Verdoppelte Zweierpotenz',
+                story: 'Welchen Zahlenwert hat eine Zahl, die genau doppelt so groß ist wie 2¹⁰ (wobei 2¹⁰ = 1024)?',
+                type: 'number',
+                correctAnswer: 2048,
+                unit: '',
+                placeholder: 'Zahl',
+                hint: '2 · 2¹⁰ = 2¹¹. Verdopple 1024 (1024 · 2).',
+                explanation: '2 · 1024 = 2048 (entspricht 2¹¹).'
+            },
+            {
+                id: 'p20',
+                category: '🎩 Hüte-Logik',
+                title: 'Das Rätsel der drei Hüte',
+                story: 'Drei Schüler stehen in einer Reihe hintereinander. Aus 3 roten und 2 blauen Hüten bekommt jeder einen aufgesetzt. Der hintere Schüler sieht die beiden vorderen, kann seine Farbe aber nicht ableiten. Der mittlere Schüler hört das und kann seine Farbe trotzdem nicht ableiten. Welche Hutfarbe hat der vorderste Schüler, der niemanden sieht?',
+                type: 'choice',
+                options: ['Rot', 'Blau'],
+                correctAnswer: 'Rot',
+                hint: 'Hätten die beiden vorderen blaue Hüte, wüsste der hintere sofort, dass er rot hat. Da er es nicht weiß, hat mindestens einer rot. Wäre der vorderste blau, wüsste der mittlere es sofort.',
+                explanation: 'Weil der Mittlere es nicht weiß, kann der Vordere keinen blauen Hut tragen. Der Vordere hat sicher einen roten Hut.'
+            }
+        ]
+    }
+];
+
+let state = {
+    currentLevelIdx: 0,
+    currentTaskIdx: 0,
+    hintUsedForCurrent: false,
+    streakWithoutHint: 0,
+    soundEnabled: true,
+    playedTaskIndices: { 0: [], 1: [], 2: [], 3: [] },
+    scratchpadMode: 'draw',
+    isDrawing: false,
+    lastX: 0,
+    lastY: 0,
+    selectedChoice: null
+};
+
+// Web Audio API Synthesizer (No external media dependencies)
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+}
+
+function playSound(type) {
+    if (!state.soundEnabled) return;
+    try {
+        initAudio();
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'success') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12); // G5
+            osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.28); // C6
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(260, now);
+            osc.frequency.exponentialRampToValueAtTime(160, now + 0.25);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'levelup') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(554.37, now + 0.1);
+            osc.frequency.setValueAtTime(659.25, now + 0.2);
+            osc.frequency.setValueAtTime(880, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } else if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        }
+    } catch (e) {
+        console.warn('Audio play prevented', e);
+    }
+}
+
+function toggleSound() {
+    state.soundEnabled = !state.soundEnabled;
+    const icon = document.getElementById('soundIcon');
+    if (icon) {
+        icon.innerText = state.soundEnabled ? '🔊' : '🔇';
+    }
+}
+
+function selectLevel(idx) {
+    if (state.currentLevelIdx !== idx) {
+        state.currentLevelIdx = idx;
+        state.currentTaskIdx = getRandomUnusedTaskIdx(idx);
+        state.streakWithoutHint = 0;
+        state.hintUsedForCurrent = false;
+        state.selectedChoice = null;
+        updateUI();
+    }
+}
+
+function getRandomUnusedTaskIdx(levelIdx) {
+    const totalTasks = LEVELS[levelIdx].tasks.length;
+    let played = state.playedTaskIndices[levelIdx] || [];
+
+    if (played.length >= totalTasks) {
+        state.playedTaskIndices[levelIdx] = [];
+        played = [];
+    }
+
+    const availableIndices = [];
+    for (let i = 0; i < totalTasks; i++) {
+        if (!played.includes(i) && i !== state.currentTaskIdx) {
+            availableIndices.push(i);
+        }
+    }
+
+    if (availableIndices.length === 0) {
+        const next = (state.currentTaskIdx + 1) % totalTasks;
+        state.playedTaskIndices[levelIdx].push(next);
+        return next;
+    }
+
+    const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+    state.playedTaskIndices[levelIdx].push(randomIndex);
+    return randomIndex;
+}
+
+function pickRandomTask() {
+    playSound('click');
+    state.currentTaskIdx = getRandomUnusedTaskIdx(state.currentLevelIdx);
+    loadTask();
+}
+
+function renderLevelTabs() {
+    const container = document.getElementById('levelTabsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    LEVELS.forEach((lvl, idx) => {
+        const btn = document.createElement('button');
+        const isActive = idx === state.currentLevelIdx;
+        btn.onclick = () => selectLevel(idx);
+        btn.className = `px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+            isActive
+                ? 'bg-white text-indigo-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+        }`;
+        btn.innerHTML = `<span>${lvl.badge}</span> <span>${lvl.name}</span>`;
+        container.appendChild(btn);
+    });
+}
+
+function updateStreakTrack() {
+    const track = document.getElementById('streakTrack');
+    const label = document.getElementById('streakCounterText');
+    if (!track) return;
+
+    if (label) {
+        label.innerText = `${state.streakWithoutHint} / 5 gemeistert`;
+    }
+
+    track.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const step = document.createElement('div');
+        const isReached = i <= state.streakWithoutHint;
+        step.className = `h-10 rounded-2xl flex items-center justify-center font-black text-xs transition-all duration-300 border ${
+            isReached
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-white border-amber-300 shadow-sm scale-105'
+                : 'bg-slate-100 text-slate-400 border-slate-200'
+        }`;
+        step.innerHTML = isReached ? `★ ${i}` : `${i}`;
+        track.appendChild(step);
+    }
+}
+
+function updateLevelHeader() {
+    const lvl = LEVELS[state.currentLevelIdx];
+    document.getElementById('levelIndexText').innerText = `Level ${lvl.id + 1} von 4`;
+    document.getElementById('levelDifficultyTag').innerText = lvl.name;
+    document.getElementById('levelName').innerText = lvl.title;
+    document.getElementById('levelBadgeIcon').innerText = lvl.badge;
+    document.getElementById('didacticTip').innerText = lvl.tip;
+
+    const poolCount = lvl.tasks.length;
+    const badge = document.getElementById('poolBadge');
+    if (badge) {
+        badge.innerText = `${poolCount} Aufgaben im Pool`;
+    }
+
+    renderLevelTabs();
+    updateStreakTrack();
+}
+
+function loadTask() {
+    const lvl = LEVELS[state.currentLevelIdx];
+    const task = lvl.tasks[state.currentTaskIdx];
+
+    state.hintUsedForCurrent = false;
+    state.selectedChoice = null;
+
+    // Reset Hint Card UI
+    const flipper = document.getElementById('hintCardFlipper');
+    if (flipper) flipper.classList.remove('flipped');
+    document.getElementById('hintBtnText').innerText = 'Hilfekarte aufdecken';
+    document.getElementById('hintUsedStatusBadge').classList.add('hidden');
+
+    // Reset Explanation Box
+    const explanationBox = document.getElementById('explanationBox');
+    explanationBox.classList.add('hidden');
+
+    // Set Task Content
+    document.getElementById('taskCategory').innerText = task.category;
+    document.getElementById('taskTitle').innerText = task.title;
+    document.getElementById('taskStory').innerHTML = task.story;
+    document.getElementById('hintContent').innerText = task.hint;
+
+    // Build Interactivity
+    const interactionContainer = document.getElementById('interactionContainer');
+    interactionContainer.innerHTML = '';
+
+    if (task.type === 'choice') {
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2';
+
+        task.options.forEach((opt) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'choice-btn text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/50 font-bold text-slate-800 transition active:scale-98 flex items-center justify-between';
+            btn.innerHTML = `<span>${opt}</span><span class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-xs text-transparent choice-check">✓</span>`;
+            btn.onclick = () => {
+                playSound('click');
+                state.selectedChoice = opt;
+                document.querySelectorAll('.choice-btn').forEach(b => {
+                    b.classList.remove('border-indigo-600', 'bg-indigo-50', 'ring-2', 'ring-indigo-300');
+                    b.querySelector('.choice-check').classList.add('text-transparent');
+                    b.querySelector('.choice-check').classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+                });
+                btn.classList.add('border-indigo-600', 'bg-indigo-50', 'ring-2', 'ring-indigo-300');
+                const check = btn.querySelector('.choice-check');
+                check.classList.remove('text-transparent');
+                check.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+            };
+            grid.appendChild(btn);
+        });
+        interactionContainer.appendChild(grid);
+    } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'flex items-center gap-3 max-w-sm pt-2';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = 'numberInput';
+        input.step = 'any';
+        input.placeholder = task.placeholder || 'Antwort eingeben';
+        input.className = 'w-full p-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 font-bold text-lg text-slate-900 bg-slate-50';
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        wrap.appendChild(input);
+
+        if (task.unit) {
+            const unit = document.createElement('span');
+            unit.className = 'font-bold text-slate-500 text-sm whitespace-nowrap';
+            unit.innerText = task.unit;
+            wrap.appendChild(unit);
+        }
+
+        interactionContainer.appendChild(wrap);
+        setTimeout(() => input.focus(), 100);
+    }
+}
+
+function toggleHint() {
+    playSound('click');
+    const flipper = document.getElementById('hintCardFlipper');
+    const isFlipped = flipper.classList.toggle('flipped');
+    
+    if (isFlipped) {
+        state.hintUsedForCurrent = true;
+        document.getElementById('hintUsedStatusBadge').classList.remove('hidden');
+        document.getElementById('hintBtnText').innerText = 'Hilfekarte umdrehen';
+    } else {
+        document.getElementById('hintBtnText').innerText = 'Hilfekarte aufdecken';
+    }
+}
+
+function checkAnswer() {
+    const lvl = LEVELS[state.currentLevelIdx];
+    const task = lvl.tasks[state.currentTaskIdx];
+    let isCorrect = false;
+
+    if (task.type === 'choice') {
+        if (!state.selectedChoice) {
+            showNotification('Bitte wähle zuerst eine Antwort aus!');
+            return;
+        }
+        isCorrect = (state.selectedChoice === task.correctAnswer);
+    } else {
+        const input = document.getElementById('numberInput');
+        if (!input || input.value.trim() === '') {
+            showNotification('Bitte gib ein Ergebnis ein!');
+            return;
+        }
+        const val = parseFloat(input.value.replace(',', '.'));
+        const target = parseFloat(task.correctAnswer);
+        isCorrect = Math.abs(val - target) < 0.01;
+    }
+
+    const expBox = document.getElementById('explanationBox');
+    const expTitle = document.getElementById('explanationTitle');
+    const expText = document.getElementById('explanationText');
+    const expIcon = document.getElementById('explanationIcon');
+
+    expBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-900', 'bg-rose-50', 'border-rose-200', 'text-rose-900');
+
+    if (isCorrect) {
+        playSound('success');
+        expBox.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-950');
+        expIcon.innerText = '🎉';
+        expTitle.innerText = 'Super gemacht! Das ist richtig!';
+        expText.innerHTML = `<strong>Lösungsweg:</strong> ${task.explanation}`;
+
+        if (!state.hintUsedForCurrent) {
+            state.streakWithoutHint++;
+            updateStreakTrack();
+
+            if (state.streakWithoutHint >= 5) {
+                triggerLevelUp();
+                return;
+            }
+        } else {
+            expText.innerHTML += `<br><span class="text-amber-800 text-xs mt-2 block font-semibold">ℹ️ Weil die Hilfekarte aktiv war, stieg der Zähler für das Level-Up nicht an.</span>`;
+        }
+    } else {
+        playSound('error');
+        state.streakWithoutHint = 0;
+        updateStreakTrack();
+
+        expBox.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-950');
+        expIcon.innerText = '🤔';
+        expTitle.innerText = 'Leider noch nicht ganz richtig!';
+        expText.innerHTML = `Versuche es noch einmal oder nutze die <strong>Hilfekarte</strong> rechts für einen Denkanstoß!<br><span class="text-xs text-rose-700 mt-2 block">Dein Level-Up-Streak wurde zurückgesetzt.</span>`;
+    }
+}
+
+function triggerLevelUp() {
+    playSound('levelup');
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+
+    const currentLvl = LEVELS[state.currentLevelIdx];
+    const isMaxLevel = state.currentLevelIdx >= LEVELS.length - 1;
+
+    document.getElementById('levelUpOld').innerText = currentLvl.name;
+
+    if (!isMaxLevel) {
+        const nextLvl = LEVELS[state.currentLevelIdx + 1];
+        document.getElementById('levelUpNew').innerText = nextLvl.name;
+        document.getElementById('levelUpTitle').innerText = 'Level-Aufstieg geschafft!';
+        document.getElementById('levelUpDesc').innerText = 'Wahnsinn! 5 Aufgaben in Folge ohne Hilfe richtig gelöst! Du steigst in das nächste Niveau auf.';
+    } else {
+        document.getElementById('levelUpNew').innerText = '🏆 Knobel-Meister';
+        document.getElementById('levelUpTitle').innerText = 'Höchstes Niveau gemeistert!';
+        document.getElementById('levelUpDesc').innerText = 'Phänomenal! Du hast das Profi-Niveau ohne Hilfe gerockt!';
+    }
+
+    document.getElementById('levelUpModal').classList.remove('hidden');
+}
+
+function confirmLevelUp() {
+    document.getElementById('levelUpModal').classList.add('hidden');
+    if (state.currentLevelIdx < LEVELS.length - 1) {
+        state.currentLevelIdx++;
+    }
+    state.streakWithoutHint = 0;
+    state.currentTaskIdx = getRandomUnusedTaskIdx(state.currentLevelIdx);
+    updateUI();
+}
+
+function loadNextTask(advanceIndex = true) {
+    state.currentTaskIdx = getRandomUnusedTaskIdx(state.currentLevelIdx);
+    loadTask();
+}
+
+function updateUI() {
+    updateLevelHeader();
+    loadTask();
+}
+
+function showNotification(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-bold z-50 transition-all';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+let canvas, ctx;
+
+function initCanvas() {
+    canvas = document.getElementById('scratchCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        const container = document.getElementById('scratchpadCanvasContainer');
+        if (container) {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#312e81';
+        }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    canvas.addEventListener('mousedown', (e) => {
+        state.isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        state.lastX = e.clientX - rect.left;
+        state.lastY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (!state.isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(state.lastX, state.lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        state.lastX = x;
+        state.lastY = y;
+    });
+
+    window.addEventListener('mouseup', () => state.isDrawing = false);
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        state.isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        state.lastX = touch.clientX - rect.left;
+        state.lastY = touch.clientY - rect.top;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!state.isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(state.lastX, state.lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        state.lastX = x;
+        state.lastY = y;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => state.isDrawing = false);
+}
+
+function toggleScratchpad() {
+    playSound('click');
+    const modal = document.getElementById('scratchpadModal');
+    const isHidden = modal.classList.toggle('hidden');
+    if (!isHidden) {
+        setTimeout(initCanvas, 50);
+    }
+}
+
+function setScratchMode(mode) {
+    playSound('click');
+    state.scratchpadMode = mode;
+    const canvasContainer = document.getElementById('scratchpadCanvasContainer');
+    const textarea = document.getElementById('scratchTextarea');
+    const drawBtn = document.getElementById('canvasModeDraw');
+    const textBtn = document.getElementById('canvasModeText');
+
+    if (mode === 'draw') {
+        canvasContainer.classList.remove('hidden');
+        textarea.classList.add('hidden');
+        drawBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white';
+        textBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
+    } else {
+        canvasContainer.classList.add('hidden');
+        textarea.classList.remove('hidden');
+        drawBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700';
+        textBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white';
+    }
+}
+
+function clearScratchpad() {
+    playSound('click');
+    if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    const textarea = document.getElementById('scratchTextarea');
+    if (textarea) textarea.value = '';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+});
+</script>
+</body>
+</html>
